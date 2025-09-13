@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import api from "@/lib/axios";
 import { useCartStore } from "./useCartStore";
+import { authSignIn } from "@/services/authService";
 
 export const useAuthStore = create((set, get) => ({
   user: null,
@@ -17,7 +18,7 @@ export const useAuthStore = create((set, get) => ({
 
   checkAuthStatus: async () => {
     try {
-      const response = await api.get("/api/auth/me");
+      const response = await api.get("/api/auth/profile");
       set({ user: response.data, isLoggedIn: true });
       useCartStore.getState().fetchCart(); // เมื่อ Login อยู่ ให้ดึงข้อมูลตะกร้าทันที
     } catch (error) {
@@ -50,17 +51,19 @@ export const useAuthStore = create((set, get) => ({
 
   login: async (userData) => {
     try {
-      const response = await api.post("/api/auth/login", userData);
+      // const response = await api.post("/api/auth/signin", userData);
+      const response = await authSignIn(userData);
+      console.log("login", response.data);
       set({ user: response.data, isLoggedIn: true });
 
       // หลังจาก Register/Login สำเร็จ ให้ดึงข้อมูลตะกร้าจาก Server
-      useCartStore.getState().fetchCart();
+      // useCartStore.getState().fetchCart();
 
-      const postAction = get().postLoginAction;
-      if (postAction) {
-        postAction(); //ทำสิ่งที่ค้างไว้
-        get().closeAuthDialog();
-      }
+      // const postAction = get().postLoginAction;
+      // if (postAction) {
+      //   postAction(); //ทำสิ่งที่ค้างไว้
+      //   get().closeAuthDialog();
+      // }
       return { success: true, data: response.data };
     } catch (error) {
       console.error("Login failed:", error.response.data);

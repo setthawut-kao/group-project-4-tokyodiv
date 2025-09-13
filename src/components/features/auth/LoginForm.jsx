@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Typography } from "@/components/ui/typography";
 import { ArrowRight } from "lucide-react";
 
 import { ToggleShowPassword } from "@/components/features/auth/ToggleShowPassword";
+import axios from "axios";
 
 export const LoginForm = ({ onSwitch, onSuccess }) => {
   // 1. สร้าง State สำหรับฟอร์ม
@@ -15,6 +16,45 @@ export const LoginForm = ({ onSwitch, onSuccess }) => {
 
   // 2. ดึง Action `login` มาจาก Store
   const login = useAuthStore((state) => state.login);
+
+  // const login = async (formData) => {
+  //   await axios
+  //     .post("http://localhost:8001/api/auth/signin", formData)
+  //     .then((res) => {
+  //       localStorage.setItem("token", res.data.accessToken);
+  //       return { success: true };
+  //     })
+  //     .catch((err) => {
+  //       if (err.response) {
+  //         return err.response.data;
+  //       }
+  //       return {
+  //         success: false,
+  //         message: "An error occurred. Please try again.",
+  //       };
+  //     });
+  // };
+
+  const checkAuth = async () => {
+    await axios
+      .get("http://localhost:8001/api/auth/profile", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
+      .then((res) => {
+        console.log(res.data);
+      })
+      .catch((err) => {
+        if (err.response) {
+          return err.response.data;
+        }
+        return {
+          success: false,
+          message: "An error occurred. Please try again.",
+        };
+      });
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -33,6 +73,13 @@ export const LoginForm = ({ onSwitch, onSuccess }) => {
       alert(result?.message || "Login failed. Please check your credentials.");
     }
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      checkAuth();
+    }
+  }, []);
 
   return (
     <div className="grid gap-6">
